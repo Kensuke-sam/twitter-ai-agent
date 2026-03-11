@@ -1,0 +1,2 @@
+# Runtime dependencies are satisfied by the Python standard library.
+# Optional dev dependencies are defined in pyproject.toml.
