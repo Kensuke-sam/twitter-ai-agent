@@ -4,6 +4,8 @@ CLI-first AI-assisted posting engine for X / Twitter.
 
 `twitter-cli-bot` をそのまま肥大化させるのではなく、投稿実行を担う CLI foundation は残したまま、その上に AI の判断層を 1 枚だけ足すための後継 repo です。
 
+This repository focuses on a minimal working Phase 1: generate, dry-run, and publish tweets through a lightweight CLI-first AI workflow.
+
 ## What this repo does
 
 - Generate tweet candidates from an article URL
@@ -42,6 +44,8 @@ chmod +x tweet.sh
 
 `twitter_cli_path` はローカルに clone 済みの `twitter-cli` ディレクトリです。  
 `default_ai_backend` を `mock` にしておくと、外部 AI CLI が無くても `autopilot --dry-run` を確認できます。
+
+Known setup note: `twitter-cli` authentication depends on the browser profile that holds the active X session. If posting fails, verify which browser profile contains the current X login cookies.
 
 ## Dry-run first
 
