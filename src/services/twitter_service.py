@@ -7,6 +7,8 @@ from typing import Any
 from utils.config import AppConfig
 from utils.helpers import CommandError
 
+_POST_TIMEOUT_SECONDS = 60
+
 
 def validate_tweet_text(text: str, max_length: int) -> None:
     if not text or not text.strip():
@@ -57,9 +59,14 @@ def post_tweet(
             capture_output=True,
             text=True,
             check=True,
+            timeout=_POST_TIMEOUT_SECONDS,
         )
     except FileNotFoundError as exc:
         raise CommandError(f"failed to run twitter-cli: {exc}", exit_code=3) from exc
+    except subprocess.TimeoutExpired as exc:
+        raise CommandError(
+            f"twitter-cli post timed out after {_POST_TIMEOUT_SECONDS}s", exit_code=3
+        ) from exc
     except subprocess.CalledProcessError as exc:
         stderr = exc.stderr.strip() or exc.stdout.strip() or str(exc)
         raise CommandError(f"twitter-cli post failed: {stderr}", exit_code=3) from exc

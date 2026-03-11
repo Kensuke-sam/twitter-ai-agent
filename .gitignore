@@ -5,3 +5,16 @@ __pycache__/
 config.json
 logs/*.log
 data/*.tmp
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg

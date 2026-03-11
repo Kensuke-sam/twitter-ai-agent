@@ -7,6 +7,7 @@
   "default_candidate_count": 5,
   "max_tweet_length": 140,
   "site_name": "Koteihi Zero",
+  "data_dir": "data",
   "articles_file": "data/articles.json",
   "drafts_file": "data/drafts.json",
   "history_file": "data/history.json",

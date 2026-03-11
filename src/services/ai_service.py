@@ -8,6 +8,16 @@ from utils.config import AppConfig
 from utils.helpers import clean_line, dedupe_texts, shorten_text
 
 
+# Lazy import to avoid circular dependency at module level; only used for logging.
+def _append_log(config: AppConfig, level: str, message: str, **extra: Any) -> None:
+    try:
+        from services.log_service import append_log  # noqa: PLC0415
+
+        append_log(config, level, message, **extra)
+    except Exception:
+        pass
+
+
 def load_prompt(config: AppConfig, name: str, fallback: str) -> str:
     prompt_path = config.prompts_dir / name
     if not prompt_path.exists():
@@ -15,9 +25,14 @@ def load_prompt(config: AppConfig, name: str, fallback: str) -> str:
     return prompt_path.read_text(encoding="utf-8")
 
 
-def _fallback_candidates(article: dict[str, Any], count: int, max_length: int) -> list[str]:
+def _fallback_candidates(
+    article: dict[str, Any], count: int, max_length: int
+) -> list[str]:
     title = article.get("title") or "この記事"
-    summary = article.get("summary") or "ポイントだけ先に押さえると、行動コストがかなり下がります。"
+    summary = (
+        article.get("summary")
+        or "ポイントだけ先に押さえると、行動コストがかなり下がります。"
+    )
     url = article["url"]
     site_name = article.get("site_name") or ""
 
@@ -74,24 +89,42 @@ def generate_candidates(
             "出力は投稿文のみを1行ずつ返してください。"
         ),
     )
-    prompt = fallback.format(
-        url=article["url"],
-        title=article.get("title", ""),
-        summary=article.get("summary", ""),
-        site_name=config.site_name,
-        count=count,
-    )
+    try:
+        prompt = fallback.format(
+            url=article["url"],
+            title=article.get("title", ""),
+            summary=article.get("summary", ""),
+            site_name=config.site_name,
+            count=count,
+        )
+    except KeyError as exc:
+        _append_log(
+            config,
+            "WARNING",
+            "tweet_generation prompt has unknown placeholder, using raw template",
+            missing_key=str(exc),
+        )
+        prompt = fallback
 
     candidates: list[str] = []
     if resolved_backend not in {"mock", "fallback", "none"}:
         try:
             output = _run_external_ai(prompt, resolved_backend, config)
             candidates = dedupe_texts(_parse_ai_output(output))
-        except Exception:
+        except Exception as exc:
+            _append_log(
+                config,
+                "WARNING",
+                "AI candidate generation failed, using fallback",
+                backend=resolved_backend,
+                error=str(exc),
+            )
             candidates = []
 
     if len(candidates) < count:
-        candidates.extend(_fallback_candidates(article, count * 2, config.max_tweet_length))
+        candidates.extend(
+            _fallback_candidates(article, count * 2, config.max_tweet_length)
+        )
         candidates = dedupe_texts(candidates)
 
     return candidates[:count], resolved_backend
@@ -115,17 +148,35 @@ def choose_best_with_ai(
             "評価基準: フック、読みやすさ、宣伝臭の低さ、140文字以内。"
         ),
     )
-    choices = "\n".join(f"{index + 1}. {item['text']}" for index, item in enumerate(candidates))
-    prompt = fallback.format(
-        title=article.get("title", ""),
-        summary=article.get("summary", ""),
-        url=article["url"],
-        candidates=choices,
+    choices = "\n".join(
+        f"{index + 1}. {item['text']}" for index, item in enumerate(candidates)
     )
+    try:
+        prompt = fallback.format(
+            title=article.get("title", ""),
+            summary=article.get("summary", ""),
+            url=article["url"],
+            candidates=choices,
+        )
+    except KeyError as exc:
+        _append_log(
+            config,
+            "WARNING",
+            "tweet_scoring prompt has unknown placeholder, using raw template",
+            missing_key=str(exc),
+        )
+        prompt = fallback
 
     try:
         output = _run_external_ai(prompt, resolved_backend, config)
-    except Exception:
+    except Exception as exc:
+        _append_log(
+            config,
+            "WARNING",
+            "AI best-candidate selection failed",
+            backend=resolved_backend,
+            error=str(exc),
+        )
         return None
 
     for token in output.replace(",", " ").split():

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,9 @@ def _normalize_article(article: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def resolve_single_article(url: str, title: str = "", summary: str = "") -> dict[str, Any]:
+def resolve_single_article(
+    url: str, title: str = "", summary: str = ""
+) -> dict[str, Any]:
     if not url:
         raise CommandError("article url is required", exit_code=2)
     return _normalize_article(
@@ -39,8 +42,6 @@ def resolve_single_article(url: str, title: str = "", summary: str = "") -> dict
 def load_articles(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         raise CommandError(f"articles file not found: {path}", exit_code=2)
-    import json
-
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, list):
         raise CommandError("articles file must be a JSON array", exit_code=2)

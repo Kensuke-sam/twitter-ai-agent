@@ -6,6 +6,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
 
+[project.scripts]
+tweet-agent = "main:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0,<9.0",
@@ -15,3 +18,11 @@ dev = [
 pythonpath = [
   "src",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = ["E501"]

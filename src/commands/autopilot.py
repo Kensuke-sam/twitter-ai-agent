@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from services.ai_service import generate_candidates
-from services.article_service import load_articles, resolve_single_article, select_article
+from services.article_service import (
+    load_articles,
+    resolve_single_article,
+    select_article,
+)
 from services.log_service import (
     append_history_record,
     append_log,
@@ -13,7 +15,7 @@ from services.log_service import (
 from services.scoring_service import score_candidates
 from services.twitter_service import post_tweet
 from utils.config import AppConfig
-from utils.helpers import CommandError, now_iso
+from utils.helpers import CommandError, now_iso, resolve_path_arg
 
 
 def register(subparsers) -> None:
@@ -33,14 +35,20 @@ def register(subparsers) -> None:
 def _resolve_article(args, config: AppConfig, history: list[dict]) -> dict:
     url = args.url or args.source
     if url:
-        article = resolve_single_article(url=url, title=args.title, summary=args.summary)
+        article = resolve_single_article(
+            url=url, title=args.title, summary=args.summary
+        )
         if any(item.get("url") == article["url"] for item in history):
-            raise CommandError("selected article URL already exists in history", exit_code=2)
+            raise CommandError(
+                "selected article URL already exists in history", exit_code=2
+            )
         return article
 
-    articles_file = Path(args.articles_file).expanduser() if args.articles_file else config.articles_file
-    if not articles_file.is_absolute():
-        articles_file = (config.project_root / articles_file).resolve()
+    articles_file = (
+        resolve_path_arg(args.articles_file, config.project_root)
+        if args.articles_file
+        else config.articles_file
+    )
     articles = load_articles(articles_file)
     return select_article(articles, history)
 
@@ -50,7 +58,9 @@ def handle(args, config: AppConfig) -> int:
     article = _resolve_article(args, config, history)
     article["site_name"] = config.site_name
 
-    candidates, backend = generate_candidates(article, config, count=args.count, backend=args.backend or None)
+    candidates, backend = generate_candidates(
+        article, config, count=args.count, backend=args.backend or None
+    )
     scored = score_candidates(
         candidates,
         history,
@@ -77,13 +87,17 @@ def handle(args, config: AppConfig) -> int:
     if args.dry_run:
         print("[DRY RUN] selected tweet:")
         print(best["text"])
-        append_log(config, "INFO", "autopilot dry-run", url=article["url"], score=best["score"])
+        append_log(
+            config, "INFO", "autopilot dry-run", url=article["url"], score=best["score"]
+        )
         return 0
 
     if best["metrics"]["max_similarity"] >= 0.92:
         raise CommandError("best candidate is too similar to history", exit_code=2)
 
     result = post_tweet(config, best["text"], dry_run=False)
+    if result.get("stdout"):
+        append_log(config, "INFO", "twitter-cli output", stdout=result["stdout"])
     append_history_record(
         config,
         {
@@ -95,6 +109,8 @@ def handle(args, config: AppConfig) -> int:
             "source": "autopilot",
         },
     )
-    append_log(config, "INFO", "autopilot posted", url=article["url"], score=best["score"])
+    append_log(
+        config, "INFO", "autopilot posted", url=article["url"], score=best["score"]
+    )
     print(result["status"])
     return 0

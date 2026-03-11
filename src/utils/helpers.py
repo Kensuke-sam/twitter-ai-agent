@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from pathlib import Path
@@ -10,10 +9,13 @@ from typing import Any
 from urllib.parse import urlparse
 
 
-@dataclass(slots=True)
 class CommandError(Exception):
-    message: str
-    exit_code: int = 1
+    """Raised by command handlers to signal a known failure with an exit code."""
+
+    def __init__(self, message: str, exit_code: int = 1) -> None:
+        super().__init__(message)
+        self.message = message
+        self.exit_code = exit_code
 
     def __str__(self) -> str:
         return self.message
@@ -25,6 +27,19 @@ def now_iso() -> str:
 
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def resolve_path_arg(raw: str, base_dir: Path) -> Path:
+    """Resolve a CLI path argument against *base_dir* when it is relative.
+
+    Absolute paths (and paths starting with ``~``) are expanded as-is.
+    Relative paths are resolved relative to *base_dir* (typically
+    ``config.project_root``).
+    """
+    path = Path(raw).expanduser()
+    if path.is_absolute():
+        return path.resolve()
+    return (base_dir / path).resolve()
 
 
 def safe_read_json(path: Path, default: Any) -> Any:
@@ -39,7 +54,9 @@ def safe_read_json(path: Path, default: Any) -> Any:
 def safe_write_json(path: Path, data: Any) -> None:
     ensure_parent(path)
     temp_path = path.with_suffix(f"{path.suffix}.tmp")
-    temp_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    temp_path.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     temp_path.replace(path)
 
 
