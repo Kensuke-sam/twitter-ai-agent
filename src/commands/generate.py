@@ -4,7 +4,7 @@ from services.ai_service import generate_candidates
 from services.article_service import resolve_single_article
 from services.log_service import append_log, save_draft_batch
 from utils.config import AppConfig
-from utils.helpers import CommandError, now_iso, resolve_path_arg
+from utils.helpers import CommandError, now_iso, resolve_candidate_count, resolve_path_arg
 
 
 def register(subparsers) -> None:
@@ -13,7 +13,7 @@ def register(subparsers) -> None:
     parser.add_argument("--url", help="記事URL")
     parser.add_argument("--title", default="", help="記事タイトル")
     parser.add_argument("--summary", default="", help="記事要約")
-    parser.add_argument("--count", type=int, default=5, help="生成する候補数")
+    parser.add_argument("--count", type=int, help="生成する候補数")
     parser.add_argument("--backend", default="", help="使用するAI backend")
     parser.add_argument("--output", default="", help="出力先JSON")
     parser.set_defaults(handler=handle)
@@ -24,10 +24,11 @@ def handle(args, config: AppConfig) -> int:
     if not url:
         raise CommandError("generate requires --url or positional URL", exit_code=2)
 
+    count = resolve_candidate_count(args.count, config.default_candidate_count)
     article = resolve_single_article(url=url, title=args.title, summary=args.summary)
     article["site_name"] = config.site_name
     candidates, backend = generate_candidates(
-        article, config, count=args.count, backend=args.backend or None
+        article, config, count=count, backend=args.backend or None
     )
 
     payload = {

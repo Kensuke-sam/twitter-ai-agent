@@ -15,7 +15,12 @@ from services.log_service import (
 from services.scoring_service import score_candidates
 from services.twitter_service import post_tweet
 from utils.config import AppConfig
-from utils.helpers import CommandError, now_iso, resolve_path_arg
+from utils.helpers import (
+    CommandError,
+    now_iso,
+    resolve_candidate_count,
+    resolve_path_arg,
+)
 
 
 def register(subparsers) -> None:
@@ -25,7 +30,7 @@ def register(subparsers) -> None:
     parser.add_argument("--title", default="", help="記事タイトル")
     parser.add_argument("--summary", default="", help="記事要約")
     parser.add_argument("--articles-file", default="", help="記事一覧JSON")
-    parser.add_argument("--count", type=int, default=5, help="生成候補数")
+    parser.add_argument("--count", type=int, help="生成候補数")
     parser.add_argument("--backend", default="", help="使用するAI backend")
     parser.add_argument("--use-ai", action="store_true", help="最終比較にAIを使う")
     parser.add_argument("--dry-run", action="store_true", help="投稿せず表示のみ")
@@ -57,9 +62,10 @@ def handle(args, config: AppConfig) -> int:
     history = load_history(config)
     article = _resolve_article(args, config, history)
     article["site_name"] = config.site_name
+    count = resolve_candidate_count(args.count, config.default_candidate_count)
 
     candidates, backend = generate_candidates(
-        article, config, count=args.count, backend=args.backend or None
+        article, config, count=count, backend=args.backend or None
     )
     scored = score_candidates(
         candidates,
@@ -69,6 +75,8 @@ def handle(args, config: AppConfig) -> int:
         use_ai=args.use_ai,
         backend=args.backend or None,
     )
+    if not scored:
+        raise CommandError("no tweet candidates were generated", exit_code=2)
     best = scored[0]
 
     payload = {

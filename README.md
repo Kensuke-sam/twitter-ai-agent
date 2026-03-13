@@ -5,6 +5,7 @@ CLI-first AI-assisted posting engine for X / Twitter.
 `twitter-cli-bot` をそのまま肥大化させるのではなく、投稿実行を担う CLI foundation は残したまま、その上に AI の判断層を 1 枚だけ足すための後継 repo です。
 
 This repository focuses on a minimal working Phase 1: generate, dry-run, and publish tweets through a lightweight CLI-first AI workflow.
+Phase 1 has been validated end-to-end with dry-run and live posting.
 
 ## What this repo does
 
@@ -22,7 +23,7 @@ This repository currently focuses on Phase 1.
 - `autopilot --dry-run`: 記事選定から候補生成、採点、最終案の表示まで通す
 - `score` / `history`: 補助コマンドとして追加済み
 
-本番投稿の運用強化、高度なスコアリング、分析機能は [TODO.md](/Users/hanesoubukensuke/twitter-ai-agent/TODO.md) で管理しています。
+本番投稿の運用強化、高度なスコアリング、分析機能は [TODO.md](./TODO.md) で管理しています。
 
 ## Quick start
 
@@ -61,15 +62,17 @@ Known setup note: `twitter-cli` authentication depends on the browser profile th
 
 ## Commands
 
-- `./tweet.sh generate --url "https://koteihi-zero.com/sample"`
+- `./tweet.sh generate --url "https://night-sky.example.com/winter-triangle"`
 - `./tweet.sh score --input data/drafts.json`
 - `./tweet.sh post --text "..." --dry-run`
 - `./tweet.sh history`
 - `./tweet.sh autopilot --dry-run`
 
+For a short public demo clip, use the sequence in [docs/demo-script.md](./docs/demo-script.md).
+
 ## Not yet implemented
 
-未実装または運用前提でまだ固めていないものは [TODO.md](/Users/hanesoubukensuke/twitter-ai-agent/TODO.md) に分離しています。
+未実装または運用前提でまだ固めていないものは [TODO.md](./TODO.md) に分離しています。
 
 ## この repo を分ける理由
 
@@ -144,7 +147,7 @@ twitter-ai-agent/
 ### 1. generate
 
 ```bash
-./tweet.sh generate --url "https://koteihi-zero.com/sample"
+./tweet.sh generate --url "https://night-sky.example.com/winter-triangle"
 ```
 
 ### 2. score
@@ -156,7 +159,7 @@ twitter-ai-agent/
 ### 3. post
 
 ```bash
-./tweet.sh post --text "固定費を減らしたいなら、最初に支払い方法を減らす方が早いです。" --dry-run
+./tweet.sh post --text "星座に詳しくなくても、冬の大三角だけ覚えると夜空を見るハードルが一気に下がります。" --dry-run
 ```
 
 ### 4. history
@@ -177,11 +180,11 @@ twitter-ai-agent/
 出力例:
 
 ```text
-[INFO] article selected: https://koteihi-zero.com/sample
+[INFO] article selected: https://night-sky.example.com/winter-triangle
 [INFO] generated 5 candidates
 [INFO] best score: 95
 [DRY RUN] selected tweet:
-固定費を減らしたいなら、最初に見直すべきものの話、難しいことはしていません。節約は気合いより設計です。毎月の固定費を先に削ると、家計管理はかなり楽になります。 まず1つ試すだけで十分です。https://koteihi-zero.com/sample
+冬の大三角を見つけると夜空が少し楽しくなるの話、難しいことはしていません。明るい3つの星を先に見つけるだけで、星座に詳しくなくても冬の夜空を追いやすくなります。 まず1つ試すだけで十分です。https://night-sky.example.com/winter-triangle
 ```
 
 本番投稿:
@@ -199,9 +202,9 @@ twitter-ai-agent/
 ```json
 [
   {
-    "url": "https://koteihi-zero.com/sample",
-    "title": "固定費を減らしたいなら、最初に見直すべきもの",
-    "summary": "節約は気合いより設計です。毎月の固定費を先に削ると、家計管理はかなり楽になります。"
+    "url": "https://night-sky.example.com/winter-triangle",
+    "title": "冬の大三角を見つけると夜空が少し楽しくなる",
+    "summary": "明るい3つの星を先に見つけるだけで、星座に詳しくなくても冬の夜空を追いやすくなります。"
   }
 ]
 ```
@@ -243,7 +246,7 @@ twitter-ai-agent/
 
 ## 旧 repo との関係
 
-- `twitter-cli-bot`: CLI foundation / execution layer
+- [`twitter-cli-bot`](https://github.com/Kensuke-sam/twitter-cli-bot): CLI foundation / execution layer
 - `twitter-ai-agent`: AI-assisted posting engine / lightweight autonomous workflow
 
 役割を分けることで、元 repo は安定した実行層として残しつつ、新 repo 側で判断ロジックを素直に進化させられます。

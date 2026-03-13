@@ -1,14 +1,14 @@
 [
   {
-    "url": "https://koteihi-zero.com/sample",
-    "title": "固定費を減らしたいなら、最初に見直すべきもの",
-    "summary": "節約は気合いより設計です。毎月の固定費を先に削ると、家計管理はかなり楽になります。",
-    "tags": ["固定費", "節約", "家計"]
+    "url": "https://night-sky.example.com/winter-triangle",
+    "title": "冬の大三角を見つけると夜空が少し楽しくなる",
+    "summary": "明るい3つの星を先に見つけるだけで、星座に詳しくなくても冬の夜空を追いやすくなります。",
+    "tags": ["星空", "天体観測", "冬"]
   },
   {
-    "url": "https://koteihi-zero.com/credit-card-reset",
-    "title": "クレジットカード整理で支出管理を立て直す方法",
-    "summary": "支払い方法が散らかるほど判断コストが増えます。まずカード枚数を絞ると、支出の見え方が変わります。",
-    "tags": ["クレジットカード", "支出管理"]
+    "url": "https://night-sky.example.com/binocular-moon",
+    "title": "双眼鏡で月を見る前に知っておきたいこと",
+    "summary": "満月より半月前後のほうが影が濃く出るので、クレーターの凹凸が見えやすくなります。",
+    "tags": ["月", "双眼鏡", "観察"]
   }
 ]

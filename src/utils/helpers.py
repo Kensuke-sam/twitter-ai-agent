@@ -8,6 +8,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+_CANDIDATE_COUNT_MIN = 1
+_CANDIDATE_COUNT_MAX = 50
+
 
 class CommandError(Exception):
     """Raised by command handlers to signal a known failure with an exit code."""
@@ -27,6 +30,19 @@ def now_iso() -> str:
 
 def ensure_parent(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def resolve_candidate_count(raw_count: int | None, default_count: int) -> int:
+    count = default_count if raw_count is None else raw_count
+    if not (_CANDIDATE_COUNT_MIN <= count <= _CANDIDATE_COUNT_MAX):
+        raise CommandError(
+            (
+                "candidate count must be between "
+                f"{_CANDIDATE_COUNT_MIN} and {_CANDIDATE_COUNT_MAX}"
+            ),
+            exit_code=2,
+        )
+    return count
 
 
 def resolve_path_arg(raw: str, base_dir: Path) -> Path:

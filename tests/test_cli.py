@@ -11,14 +11,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 _ARTICLE_A = {
     "url": "https://example.com/article-a",
-    "title": "固定費を下げると家計管理が楽になる理由",
-    "summary": "節約は気合いより先に仕組み化した方が続きます。",
+    "title": "冬の大三角を見つけると夜空が少し楽しくなる",
+    "summary": "明るい3つの星を先に見つけるだけで、星座に詳しくなくても冬の夜空を追いやすくなります。",
 }
 
 _ARTICLE_B = {
     "url": "https://example.com/article-b",
-    "title": "クレジットカード整理で支出管理を立て直す方法",
-    "summary": "支払い方法が散らかるほど判断コストが増えます。",
+    "title": "双眼鏡で月を見る前に知っておきたいこと",
+    "summary": "満月より半月前後のほうが影が濃く出るので、クレーターの凹凸が見えやすくなります。",
 }
 
 
@@ -86,7 +86,7 @@ class CliTestCase(unittest.TestCase):
             "--url",
             "https://example.com/article-b",
             "--title",
-            "固定費を減らす",
+            "冬の大三角を見つける",
         )
         self.assertEqual(generate.returncode, 0, generate.stderr)
         self.assertIn("候補1:", generate.stdout)
@@ -98,14 +98,14 @@ class CliTestCase(unittest.TestCase):
     def test_manual_post_dry_run(self) -> None:
         # Without --dry-run and without twitter_cli_path configured → exit 3
         result = self._run(
-            "post", "--text", "固定費を見直すなら最初に支払い方法を減らす方が早いです。"
+            "post", "--text", "星座に詳しくなくても、冬の大三角だけ覚えると夜空を見るハードルが一気に下がります。"
         )
         self.assertEqual(result.returncode, 3, result.stderr)
 
         dry_run = self._run(
             "post",
             "--text",
-            "固定費を見直すなら最初に支払い方法を減らす方が早いです。",
+            "星座に詳しくなくても、冬の大三角だけ覚えると夜空を見るハードルが一気に下がります。",
             "--dry-run",
         )
         self.assertEqual(dry_run.returncode, 0, dry_run.stderr)
@@ -152,6 +152,50 @@ class CliTestCase(unittest.TestCase):
         candidate_lines = [ln for ln in result.stdout.splitlines() if ln.startswith("候補")]
         self.assertEqual(len(candidate_lines), 3)
 
+    def test_generate_uses_config_default_candidate_count(self) -> None:
+        (self.root / "config.json").write_text(
+            json.dumps(
+                {
+                    "articles_file": "data/articles.json",
+                    "drafts_file": "data/drafts.json",
+                    "history_file": "data/history.json",
+                    "logs_dir": "logs",
+                    "default_ai_backend": "mock",
+                    "default_candidate_count": 3,
+                },
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        result = self._run("generate", "--url", "https://example.com/default-count")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        candidate_lines = [ln for ln in result.stdout.splitlines() if ln.startswith("候補")]
+        self.assertEqual(len(candidate_lines), 3)
+
+    def test_generate_rejects_invalid_count(self) -> None:
+        result = self._run(
+            "generate",
+            "--url",
+            "https://example.com/invalid-count",
+            "--count",
+            "0",
+        )
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("candidate count must be between", result.stderr)
+
+    def test_generate_supports_more_than_seven_candidates_in_mock_mode(self) -> None:
+        result = self._run(
+            "generate",
+            "--url",
+            "https://example.com/more-than-seven",
+            "--count",
+            "8",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        candidate_lines = [ln for ln in result.stdout.splitlines() if ln.startswith("候補")]
+        self.assertEqual(len(candidate_lines), 8)
+
     # ------------------------------------------------------------------
     # score command
     # ------------------------------------------------------------------
@@ -194,7 +238,7 @@ class CliTestCase(unittest.TestCase):
                 {
                     "posted_at": "2024-01-01T00:00:00+00:00",
                     "url": "https://example.com/article-a",
-                    "title": "固定費",
+                    "title": "星空",
                     "tweet": "テスト投稿です。",
                     "source": "manual-post",
                 }
@@ -212,13 +256,13 @@ class CliTestCase(unittest.TestCase):
         self.assertIn("already been posted", result.stderr)
 
     def test_post_similarity_check_blocks_near_duplicate(self) -> None:
-        tweet = "固定費を見直すなら最初に支払い方法を減らす方が早いです。"
+        tweet = "星座に詳しくなくても、冬の大三角だけ覚えると夜空を見るハードルが一気に下がります。"
         self._write_history(
             [
                 {
                     "posted_at": "2024-01-01T00:00:00+00:00",
                     "url": "https://example.com/old",
-                    "title": "固定費",
+                    "title": "星空",
                     "tweet": tweet,
                     "source": "manual-post",
                 }
@@ -229,13 +273,13 @@ class CliTestCase(unittest.TestCase):
         self.assertIn("similar", result.stderr)
 
     def test_post_force_overrides_similarity_check(self) -> None:
-        tweet = "固定費を見直すなら最初に支払い方法を減らす方が早いです。"
+        tweet = "星座に詳しくなくても、冬の大三角だけ覚えると夜空を見るハードルが一気に下がります。"
         self._write_history(
             [
                 {
                     "posted_at": "2024-01-01T00:00:00+00:00",
                     "url": "https://example.com/old",
-                    "title": "固定費",
+                    "title": "星空",
                     "tweet": tweet,
                     "source": "manual-post",
                 }
@@ -264,23 +308,23 @@ class CliTestCase(unittest.TestCase):
                 {
                     "posted_at": "2024-01-01T09:00:00+09:00",
                     "url": "https://example.com/article-a",
-                    "title": "固定費",
-                    "tweet": "固定費を減らすと家計が楽になります。",
+                    "title": "星空",
+                    "tweet": "冬の大三角だけ覚えると夜空を見るハードルが下がります。",
                     "source": "manual-post",
                 },
                 {
                     "posted_at": "2024-01-02T09:00:00+09:00",
                     "url": "https://example.com/article-b",
-                    "title": "カード整理",
-                    "tweet": "カード枚数を絞ると支出の見え方が変わります。",
+                    "title": "月観察",
+                    "tweet": "半月前後はクレーターの凹凸が見えやすく、双眼鏡でも月面がかなり楽しいです。",
                     "source": "autopilot",
                 },
             ]
         )
         result = self._run("history")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("固定費を減らすと家計が楽になります。", result.stdout)
-        self.assertIn("カード枚数を絞ると支出の見え方が変わります。", result.stdout)
+        self.assertIn("冬の大三角だけ覚えると夜空を見るハードルが下がります。", result.stdout)
+        self.assertIn("半月前後はクレーターの凹凸が見えやすく、双眼鏡でも月面がかなり楽しいです。", result.stdout)
 
     def test_history_json_flag(self) -> None:
         self._write_history(
@@ -288,7 +332,7 @@ class CliTestCase(unittest.TestCase):
                 {
                     "posted_at": "2024-01-01T09:00:00+09:00",
                     "url": "https://example.com/article-a",
-                    "title": "固定費",
+                    "title": "星空",
                     "tweet": "テスト投稿。",
                     "source": "manual-post",
                 }
@@ -429,6 +473,11 @@ class CliTestCase(unittest.TestCase):
         self.assertIn("article", batch)
         self.assertIn("candidates", batch)
         self.assertIn("scored_candidates", batch)
+
+    def test_autopilot_rejects_invalid_count(self) -> None:
+        result = self._run("autopilot", "--dry-run", "--count", "0")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("candidate count must be between", result.stderr)
 
     # ------------------------------------------------------------------
     # CLI meta
