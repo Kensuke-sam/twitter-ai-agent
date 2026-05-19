@@ -7,6 +7,27 @@ CLI-first AI-assisted posting engine for X / Twitter.
 This repository focuses on a minimal working Phase 1: generate, dry-run, and publish tweets through a lightweight CLI-first AI workflow.
 Phase 1 has been validated end-to-end with dry-run and live posting.
 
+> **警告 — 使う前に必ず読んでください。** この repo は公式の X API ではなく、`twitter-cli`（[jackwener/twitter-cli](https://github.com/jackwener/twitter-cli)）経由の**非公式なブラウザ Cookie 認証**で X / Twitter に投稿します。さらに `autopilot` による自律投稿・cron 定期実行を備えます。これらは X の利用規約・自動化ルールに違反する可能性があり、アカウントが**レート制限・凍結・永久 BAN** される恐れがあります。本ツールは無保証で、技術検証・個人利用を目的に現状のまま提供されます。使用前に[免責事項](#免責事項)を必ず確認してください。
+
+---
+
+## 免責事項
+
+この repo は公式の X API を使用していません。投稿の実行層は `twitter_service.py` 経由で `twitter-cli`（[jackwener/twitter-cli](https://github.com/jackwener/twitter-cli)）を呼び出し、`twitter-cli` は**ブラウザのセッション Cookie** を使ってログイン済みブラウザと同じように X / Twitter へアクセスします。
+
+**利用規約について。** 公式 API 以外の自動的な手段による X へのアクセス（自動読み取り・スクレイピング・自動投稿）は、[X の利用規約](https://x.com/ja/tos)、[X Developer Agreement and Policy](https://developer.x.com/en/developer-terms/agreement-and-policy)、[X の自動化に関するルール](https://help.x.com/ja/rules-and-policies/x-automation)に違反する可能性があります。
+
+**アカウントのリスク。** 本 repo の中心機能である `autopilot`（記事選定から候補生成・採点・投稿までの自律ワークフロー）と cron による定期投稿は、X のスパム対策・自動化ルールが制限している自動・大量の操作にあたります。これらを使うとアカウントが**レート制限・凍結・永久 BAN** される可能性があり、X は予告なく措置を取ることがあります。また非公式の Cookie ベースの仕組みは、X の内部仕様変更により予告なく動作しなくなる可能性があります。
+
+**利用者の責任。**
+
+- **自分自身が所有するアカウントでのみ**使用してください。管理権限のないアカウントには絶対に使用しないでください。
+- **投稿された内容（AI が生成・採点したテキストを含む）の責任はすべて利用者にあります。** 必ず `--dry-run` で内容を確認し、`autopilot` の本番実行や cron 連携は特に慎重に扱ってください。
+- スパム、大量フォロー、大量エンゲージメント、その他 X が禁止する行為に使用しないでください。
+- 記事から投稿候補を生成する際は、引用元の著作権を尊重し、本文の丸写しを避け、要約と出典明記を行ってください。
+
+**無保証。** 本ソフトウェアは「現状のまま」提供され、いかなる保証もありません。作者は、本ツールの使用により生じたアカウント凍結・データ損失・その他一切の損害について**責任を負いません**。**自己責任でご利用ください。** 規約に準拠した方法が必要な場合は、[公式の X API](https://developer.x.com/en/docs/x-api) を使用してください。
+
 ## What this repo does
 
 - Generate tweet candidates from an article URL
